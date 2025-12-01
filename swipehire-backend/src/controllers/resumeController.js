@@ -10,39 +10,38 @@ export const uploadResumeController = async (req, res) => {
     if (!req.file) return res.status(400).json({ msg: "No file uploaded" });
 
     const userId = req.userId;
-    const filePath = req.file.path; // multer gives this
-    const absolutePath = path.resolve(filePath);
+    const filePath = req.file.path;
 
-    // Basic file type validation (just in case)
-    if (!absolutePath.toLowerCase().endsWith(".pdf")) {
-      return res.status(400).json({ msg: "Only PDF files are allowed" });
-    }
-
-    // Robust import: handle ESM default or CJS
-    const pdfModule = await import("pdf-parse").catch((e) => {
+    // Dynamic import (works in ESM) and pick default export if present
+    let pdf;
+    try {
+      const mod = await import("pdf-parse");
+      pdf = mod.default ?? mod;
+    } catch (e) {
       console.error("Failed to import pdf-parse:", e);
-      throw new Error("pdf-parse import failed");
-    });
-    const pdf = pdfModule.default ?? pdfModule;
-
-    // Read file buffer
-    const buffer = fs.readFileSync(absolutePath);
-
-    // Parse PDF (pdf should be a function)
-    if (typeof pdf !== "function") {
-      console.error("pdf-parse export is not a function, got:", typeof pdf, Object.keys(pdf || {}));
-      throw new Error("pdf-parse invalid export");
+      return res.status(500).json({ error: "Server: pdf-parse not available" });
     }
 
-    const data = await pdf(buffer);
+    // Read PDF file as buffer
+    const buffer = fs.readFileSync(filePath);
 
-    const fullText = (data.text || "").toLowerCase();
+    // Parse
+    let data;
+    try {
+      data = await pdf(buffer);
+    } catch (e) {
+      console.error("Error during pdf parsing:", e);
+      return res.status(500).json({ error: "Server: error parsing PDF" });
+    }
 
+    const fullText = (data?.text || "").toLowerCase();
+
+    // Expand skill list as required
     const skillsList = [
-      "javascript", "java", "python", "react", "node",
-      "express", "sql", "postgres", "mongodb", "c++",
-      "c", "c#", "html", "css", "aws", "docker",
-      "kubernetes", "typescript", "next", "angular"
+      "javascript","java","python","react","node","express","sql","postgres",
+      "postgresql","mongodb","c++","c","c#","html","css","aws","docker",
+      "kubernetes","typescript","next","angular","rest","graphql","django",
+      "flask","spring","linux"
     ];
 
     const foundSkills = skillsList.filter(skill => fullText.includes(skill));
@@ -55,9 +54,6 @@ export const uploadResumeController = async (req, res) => {
       },
     });
 
-    // optional: leave file on disk so it can be served from /uploads
-    console.log(`Resume processed for user ${userId}. Skills found:`, foundSkills);
-
     return res.json({
       msg: "Resume processed successfully",
       resumePath: filePath,
@@ -66,8 +62,7 @@ export const uploadResumeController = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Resume Error:", err && err.message ? err.message : err);
-    // return more actionable error to developer, but keep client message minimal
-    return res.status(500).json({ error: "Error processing resume", detail: err.message ?? String(err) });
+    console.error("Resume Error:", err);
+    return res.status(500).json({ error: "Error processing resume" });
   }
 };
