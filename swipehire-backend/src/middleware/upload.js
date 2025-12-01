@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 
 const uploadsFolder = path.resolve("uploads/resumes");
+
 if (!fs.existsSync(uploadsFolder)) {
   fs.mkdirSync(uploadsFolder, { recursive: true });
 }
@@ -20,5 +21,5 @@ const storage = multer.diskStorage({
 
 export const uploadResume = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit (adjust as needed)
+  limits: { fileSize: 5 * 1024 * 1024 },
 });

@@ -8,18 +8,17 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(uuid())
+  id             String      @id @default(uuid())
   name           String
-  email          String   @unique
+  email          String      @unique
   password       String
   resumeUrl      String?
-  skills         String[] @default([])
+  skills         String[]    @default([])
   rolePreference String?
   lookingFor     String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  // Add this line (relation back to SwipedJob)
   swipes SwipedJob[]
 }
 
@@ -27,7 +26,7 @@ model SwipedJob {
   id        String   @id @default(uuid())
   userId    String
   jobId     String
-  action    String // "like" or "skip"
+  action    String
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])

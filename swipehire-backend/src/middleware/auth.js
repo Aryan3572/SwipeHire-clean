@@ -7,14 +7,16 @@ export const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization || "";
     if (!authHeader) return res.status(401).json({ msg: "No token provided" });
 
-    const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
-    if (!token) return res.status(401).json({ msg: "Invalid token" });
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : authHeader;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
     req.userId = decoded.id;
     next();
   } catch (err) {
-    console.error(err);
+    console.error("Auth error:", err);
     return res.status(401).json({ msg: "Unauthorized" });
   }
 };

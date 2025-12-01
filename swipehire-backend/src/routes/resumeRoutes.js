@@ -5,6 +5,11 @@ import { uploadResumeController } from "../controllers/resumeController.js";
 
 const router = express.Router();
 
-router.post("/upload", verifyToken, uploadResume.single("resume"), uploadResumeController);
+router.post(
+  "/upload",
+  verifyToken,
+  uploadResume.single("resume"),
+  uploadResumeController
+);
 
 export default router;
